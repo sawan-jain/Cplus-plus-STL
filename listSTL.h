@@ -1,35 +1,35 @@
 #include<iostream>
 using namespace std;
 
-class List;
-
+template<typename T1>
 class Node {
-    int data;
+    T1 data;
 
 public :
-    Node* next;Node* tail;
+    Node<T1>* next;
 
-    Node(int d):data(d),next(NULL){}
+    Node(T1 d):data(d),next(NULL){}
 
-    int get_data() {
+    T1 get_data() {
         return data;
     }
-    friend class List;
 };
 
+
+template<typename T2>
 class List{
-    Node* head;
-    Node* tail;
+    Node<T2>* head;
+    Node<T2>* tail;
 
 public: 
     List():head(NULL),tail(NULL){}
 
-    Node* begin() {
+    Node<T2>* begin() {
         return head;
     }
 
     int length() {
-        Node* t1=head;
+        Node<T2>* t1=head;
         int count=0;
         while(t1!=NULL) {
             count++;
@@ -39,40 +39,40 @@ public:
         return count;
     }
 
-    void push_front(int data) {
+    void push_front(T2 data) {
         if(head==NULL) {
-            Node* n = new Node(data);
+            Node<T2>* n = new Node<T2>(data);
             head=tail=n;
         }
         else {
-            Node* n = new Node(data);
+            Node<T2>* n = new Node<T2>(data);
             n->next=head;
             head=n;
         }
     }
 
-    void push_back(int data) {
+    void push_back(T2 data) {
         if(tail==NULL) {
-            Node* n=new Node(data);
+            Node<T2>* n = new Node<T2>(data);
             head=tail=n;
         }
         else {
-            Node* n= new Node(data);
+            Node<T2>* n= new Node<T2>(data);
             tail->next=n;
             tail=n;
         }
     }
 
-    void insert(int data,int pos) {
+    void insert(T2 data,int pos) {
         if(pos==0) {
             push_front(data);
         }
         else {
-            Node* temp=head;
+            Node<T2>* temp = head;
             for(int i=1; i<pos; i++) {
                 temp=temp->next;
             }
-            Node* n =new Node(data);
+            Node<T2>* n =new Node<T2>(data);
             n->next=temp->next;
             temp->next=n;
         }
@@ -82,15 +82,15 @@ public:
     void deletion(int index) {
     
         if(index==0) {
-            Node* temp=head;
+            Node<T2>* temp=head;
             head=head->next;
             temp->next=NULL;
             delete temp;
         }
 
         else {
-            Node* t1=head;
-            Node* t2=head;
+            Node<T2>* t1=head;
+            Node<T2>* t2=head;
             for(int i=0; i<index-1; i++) {
                 t1= t1->next;
             }
@@ -104,21 +104,19 @@ public:
     }
 
     void reverse() {
-        Node* t1=head;              
+        Node<T2>* t1=head;              
         int count=0;
         while(t1!=NULL) {
             count++;
             t1=t1->next;
         }
 
-        Node* n=head;
-        Node* m=tail;
+        Node<T2>* n=head;
+        Node<T2>* m=tail;
         for(int i=0; i<count; i++) {
             m->next = n;
             n = n->next;
         }
         n=n->next;
     }
-
-
 };
