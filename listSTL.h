@@ -104,19 +104,14 @@ public:
     }
 
     void reverse() {
-        Node<T2>* t1=head;              
-        int count=0;
-        while(t1!=NULL) {
-            count++;
-            t1=t1->next;
+        Node* p = NULL;
+        Node* c = head;
+        Node* t;
+        while(c != NULL) {
+            t = c->next;
+            c->next = p;
+            p = c;
+            c = t;
         }
-
-        Node<T2>* n=head;
-        Node<T2>* m=tail;
-        for(int i=0; i<count; i++) {
-            m->next = n;
-            n = n->next;
-        }
-        n=n->next;
     }
 };
