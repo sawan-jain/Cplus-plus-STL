@@ -103,7 +103,7 @@ public:
         }
     }
 
-    void reverse() {
+    Node* reverse() {
         Node* p = NULL;
         Node* c = head;
         Node* t;
@@ -113,5 +113,7 @@ public:
             p = c;
             c = t;
         }
+        
+        return p;
     }
 };
