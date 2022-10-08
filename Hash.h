@@ -101,6 +101,7 @@ public :
                 if(temp->key == key) {
                     return true;
                 }
+                temp = temp->key;
             }
         }
         return false;
