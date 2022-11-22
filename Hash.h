@@ -101,7 +101,7 @@ public :
                 if(temp->key == key) {
                     return true;
                 }
-                temp = temp->key;
+                temp = temp->next;
             }
         }
         return false;
