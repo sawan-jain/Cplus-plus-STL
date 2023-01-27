@@ -1,3 +1,7 @@
+// SEGMENT TREE ARE USED TO EFFICIENTLY PROCESS RANGE QUERIES LIKE SUM,MIN,MAX,AND,OR,XOR.
+// TC--> O(N + QLOG(N))  N->TREE BUILD  LOG(N)->TIME TO PROCESS 1 QUERY
+// SC--> O(N)   
+
 #include<bits/stdc++.h>
 #define ll long long
 using namespace std;
@@ -19,12 +23,12 @@ void build(int ind,int low,int high) {
     int mid = (low+high)/2;
     build(2*ind+1,low,mid);
     build(2*ind+2,mid+1,high);
-    segment[ind] = min(segment[2*ind+1],segment[2*ind+2]);
+    segment[ind] = min(segment[2*ind+1],segment[2*ind+2]);   // change this statement according to problem
 }
 
 int query(int ind,int low,int high,int l,int r) {
     if(low>=l && high<=r) return segment[ind];
-    if(high<l || low>r) return INT_MAX;
+    if(high<l || low>r) return INT_MAX;   // change this statement according to problem
 
     int mid = (low+high)/2;
     int left = query(2*ind+1,low,mid,l,r);
