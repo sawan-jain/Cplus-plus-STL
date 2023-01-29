@@ -51,8 +51,8 @@ void update(int ind,int low,int high,int l,int r,int change) {
     if(low>=l && high<=r) {
         segment[ind] += change;
         if(low != high) {
-            lazyUpdate[2*ind + 1] += lazyUpdate[ind];
-            lazyUpdate[2*ind+2] += lazyUpdate[ind];
+            lazyUpdate[2*ind + 1] += change;
+            lazyUpdate[2*ind+2] += change;
         }
         return;
     }
