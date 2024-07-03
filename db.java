@@ -19,27 +19,6 @@ public class ProductRowMapper implements RowMapper<Product> {
     }
 }
 
-// create a rowMapper
-package com.example.demo.mapper;
-
-import com.example.demo.entity.Product;
-import org.springframework.jdbc.core.RowMapper;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-public class ProductRowMapper implements RowMapper<Product> {
-    @Override
-    public Product mapRow(ResultSet rs, int rowNum) throws SQLException {
-        Product product = new Product();
-        product.setId(rs.getLong("id"));
-        product.setName(rs.getString("name"));
-        product.setDescription(rs.getString("description"));
-        product.setPrice(rs.getDouble("price"));
-        return product;
-    }
-}
-
 // DAO file
 package com.example.demo.dao.impl;
 
@@ -63,6 +42,19 @@ public class ProductDaoImpl implements ProductDao {
         String sql = "SELECT * FROM products WHERE name LIKE ? OR description LIKE ?";
         String searchKeyword = "%" + keyword + "%";
         return jdbcTemplate.query(sql, new Object[]{searchKeyword, searchKeyword}, new ProductRowMapper());
+    }
+    @Override
+    public void upsertProductByJobStatus(String jobStatus, String name, String description, Double price) {
+        String searchSql = "SELECT * FROM products WHERE job_status = ?";
+        List<Product> products = jdbcTemplate.query(searchSql, new Object[]{jobStatus}, new ProductRowMapper());
+
+        if (products.isEmpty()) {
+            String insertSql = "INSERT INTO products (name, description, price, job_status) VALUES (?, ?, ?, ?)";
+            jdbcTemplate.update(insertSql, name, description, price, jobStatus);
+        } else {
+            String updateSql = "UPDATE products SET name = ?, description = ?, price = ? WHERE job_status = ?";
+            jdbcTemplate.update(updateSql, name, description, price, jobStatus);
+        }
     }
 }
 
