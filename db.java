@@ -1,119 +1,94 @@
-// define entity
+// row mapper for entity
+package com.example.demo.mapper;
 
-package com.example.demo.entity;
+import com.example.demo.entity.Product;
+import org.springframework.jdbc.core.RowMapper;
 
-import javax.persistence.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
-@Entity
-@Table(name = "products")
-public class Product {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    @Column(name = "description")
-    private String description;
-
-    @Column(name = "price", nullable = false)
-    private Double price;
-
-    // Getters and Setters
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Double getPrice() {
-        return price;
-    }
-
-    public void setPrice(Double price) {
-        this.price = price;
+public class ProductRowMapper implements RowMapper<Product> {
+    @Override
+    public Product mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Product product = new Product();
+        product.setId(rs.getLong("id"));
+        product.setName(rs.getString("name"));
+        product.setDescription(rs.getString("description"));
+        product.setPrice(rs.getDouble("price"));
+        return product;
     }
 }
 
-
-// create repo interface
-package com.example.demo.repository;
+// create a rowMapper
+package com.example.demo.mapper;
 
 import com.example.demo.entity.Product;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.jdbc.core.RowMapper;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class ProductRowMapper implements RowMapper<Product> {
+    @Override
+    public Product mapRow(ResultSet rs, int rowNum) throws SQLException {
+        Product product = new Product();
+        product.setId(rs.getLong("id"));
+        product.setName(rs.getString("name"));
+        product.setDescription(rs.getString("description"));
+        product.setPrice(rs.getDouble("price"));
+        return product;
+    }
+}
+
+// DAO file
+package com.example.demo.dao.impl;
+
+import com.example.demo.dao.ProductDao;
+import com.example.demo.entity.Product;
+import com.example.demo.mapper.ProductRowMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public class ProductDaoImpl implements ProductDao {
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Override
+    public List<Product> searchProducts(String keyword) {
+        String sql = "SELECT * FROM products WHERE name LIKE ? OR description LIKE ?";
+        String searchKeyword = "%" + keyword + "%";
+        return jdbcTemplate.query(sql, new Object[]{searchKeyword, searchKeyword}, new ProductRowMapper());
+    }
 }
 
-
-// implement service layer
+// service layer
 package com.example.demo.service;
 
+import com.example.demo.dao.ProductDao;
 import com.example.demo.entity.Product;
-import com.example.demo.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ProductService {
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductDao productDao;
 
-    public Product createProduct(Product product) {
-        return productRepository.save(product);
-    }
-
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
-    }
-
-    public Optional<Product> getProductById(Long id) {
-        return productRepository.findById(id);
-    }
-
-    public Product updateProduct(Long id, Product productDetails) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
-        product.setName(productDetails.getName());
-        product.setDescription(productDetails.getDescription());
-        product.setPrice(productDetails.getPrice());
-        return productRepository.save(product);
-    }
-
-    public void deleteProduct(Long id) {
-        Product product = productRepository.findById(id).orElseThrow(() -> new RuntimeException("Product not found"));
-        productRepository.delete(product);
+    public List<Product> searchProducts(String keyword) {
+        return productDao.searchProducts(keyword);
     }
 }
 
 
-// create controller
+// controller
 package com.example.demo.controller;
 
 import com.example.demo.entity.Product;
@@ -131,95 +106,9 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    @PostMapping
-    public Product createProduct(@RequestBody Product product) {
-        return productService.createProduct(product);
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchProducts(@RequestParam String keyword) {
+        List<Product> products = productService.searchProducts(keyword);
+        return ResponseEntity.ok(products);
     }
-
-    @GetMapping
-    public List<Product> getAllProducts() {
-        return productService.getAllProducts();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        return productService.getProductById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product productDetails) {
-        return ResponseEntity.ok(productService.updateProduct(id, productDetails));
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
-    }
-}
-
-
-
-// application properties
-spring.datasource.url=jdbc:db2://<DB2_HOST>:<DB2_PORT>/<DB2_DATABASE>
-spring.datasource.username=<DB2_USERNAME>
-spring.datasource.password=<DB2_PASSWORD>
-spring.datasource.driver-class-name=com.ibm.db2.jcc.DB2Driver
-spring.jpa.database-platform=org.hibernate.dialect.DB2Dialect
-
-
-// build.gradle
-plugins {
-    id 'org.springframework.boot' version '3.1.0'
-    id 'io.spring.dependency-management' version '1.1.0'
-    id 'java'
-}
-
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'com.ibm.db2:jcc:11.5.7.0'
-    runtimeOnly 'com.h2database:h2'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-}
-
-test {
-    useJUnitPlatform()
-}
-
-// add
-plugins {
-    id 'org.springframework.boot' version '3.1.0'
-    id 'io.spring.dependency-management' version '1.1.0'
-    id 'java'
-}
-
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'com.ibm.db2:jcc:11.5.7.0'
-    runtimeOnly 'com.h2database:h2'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-}
-
-test {
-    useJUnitPlatform()
 }
