@@ -1,3 +1,42 @@
+// controller file
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.concurrent.atomic.AtomicInteger;
+
+@RestController
+public class RunBatchController {
+
+    private AtomicInteger progress = new AtomicInteger(0);
+
+    @GetMapping("/your-endpoint")
+    public void runBatch(@RequestParam("dateToRun") String dateToRun) {
+        // Reset progress
+        progress.set(0);
+
+        // Simulate a long-running job
+        new Thread(() -> {
+            for (int i = 0; i <= 100; i++) {
+                try {
+                    Thread.sleep(100); // Simulate job progress
+                    progress.set(i);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
+        System.out.println("Received date: " + dateToRun);
+    }
+
+    @GetMapping("/job-status")
+    public int getJobStatus() {
+        return progress.get();
+    }
+}
+
+
+
 // run-batch.component.ts
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
