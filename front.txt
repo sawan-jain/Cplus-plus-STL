@@ -1,16 +1,40 @@
-// controller file
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+// details.ts
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Component({
+  selector: 'app-details',
+  templateUrl: './details.component.html',
+  styleUrls: ['./details.component.css']
+})
+export class DetailsComponent implements OnInit {
+
+  entries$: Observable<any[]>; // Observable for entries
+
+  constructor(private http: HttpClient) { }
+
+  ngOnInit(): void {
+    this.entries$ = this.fetchEntries();
+  }
+
+  fetchEntries(): Observable<any[]> {
+    const apiUrl = 'http://localhost:8080/api/entries'; // Replace with your API endpoint
+    return this.http.get<any[]>(apiUrl);
+  }
+}
+
+
+
+import org.springframework.stereotype.Service;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@RestController
-public class RunBatchController {
+@Service
+public class JobStatusService {
 
     private AtomicInteger progress = new AtomicInteger(0);
 
-    @GetMapping("/your-endpoint")
-    public void runBatch(@RequestParam("dateToRun") String dateToRun) {
+    public void startJob() {
         // Reset progress
         progress.set(0);
 
@@ -25,15 +49,39 @@ public class RunBatchController {
                 }
             }
         }).start();
-
-        System.out.println("Received date: " + dateToRun);
     }
 
-    @GetMapping("/job-status")
     public int getJobStatus() {
         return progress.get();
     }
 }
+
+// details.html
+<!-- details.component.html -->
+
+<div *ngIf="entries$ | async as entries">
+  <h2>Details</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Status</th>
+        <!-- Add other table headers as needed -->
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let entry of entries">
+        <td>{{ entry.id }}</td>
+        <td>{{ entry.status }}</td>
+        <!-- Add other table cells as needed -->
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div *ngIf="!(entries$ | async)">
+  <p>Loading entries...</p>
+</div>
 
 
 
