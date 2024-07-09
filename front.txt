@@ -1,0 +1,109 @@
+// run-batch.component.ts
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { HttpClient, HttpClientModule, HttpParams } from '@angular/common/http';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { CommonModule } from '@angular/common';
+import { interval, Subscription } from 'rxjs';
+
+@Component({
+  selector: 'app-run-batch',
+  templateUrl: './run-batch.component.html',
+  styleUrls: ['./run-batch.component.css'],
+  standalone: true,
+  imports: [
+    ReactiveFormsModule,
+    HttpClientModule,
+    MatDatepickerModule,
+    MatInputModule,
+    MatNativeDateModule,
+    MatButtonModule,
+    MatProgressBarModule,
+    CommonModule
+  ]
+})
+export class RunBatchComponent {
+  dateForm: FormGroup;
+  progress = 0;
+  isJobRunning = false;
+  private jobStatusSubscription: Subscription;
+
+  constructor(private fb: FormBuilder, private http: HttpClient) {
+    this.dateForm = this.fb.group({
+      date: ['']
+    });
+  }
+
+  onSubmit() {
+    const selectedDate = this.dateForm.value.date;
+    this.sendDateToBackend(selectedDate);
+  }
+
+  sendDateToBackend(date: string) {
+    const apiUrl = 'http://localhost:8080/your-endpoint'; // Replace with your local API endpoint
+    let params = new HttpParams().set('dateToRun', date);
+
+    this.isJobRunning = true;
+    this.progress = 0;
+
+    this.http.get(apiUrl, { params }).subscribe({
+      next: (response) => this.startJobStatusPolling(),
+      error: (error) => {
+        console.error('Error sending date', error);
+        this.isJobRunning = false;
+      }
+    });
+  }
+
+  startJobStatusPolling() {
+    const statusUrl = 'http://localhost:8080/job-status';
+    this.jobStatusSubscription = interval(1000).subscribe(() => {
+      this.http.get<number>(statusUrl).subscribe({
+        next: (status) => {
+          this.progress = status;
+          if (status >= 100) {
+            this.isJobRunning = false;
+            this.jobStatusSubscription.unsubscribe();
+          }
+        },
+        error: (error) => {
+          console.error('Error fetching job status', error);
+          this.isJobRunning = false;
+          this.jobStatusSubscription.unsubscribe();
+        }
+      });
+    });
+  }
+}
+
+
+
+// run-batch.component.html
+
+<div>
+  <!-- Other elements of your component -->
+  <h1>Run Batch Component</h1>
+  
+  <form [formGroup]="dateForm" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="fill">
+      <mat-label>Choose a date</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="date">
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+    <button mat-raised-button type="submit" [disabled]="isJobRunning">Submit</button>
+  </form>
+
+  <div *ngIf="isJobRunning">
+    <mat-progress-bar mode="determinate" [value]="progress"></mat-progress-bar>
+    <p>Job Progress: {{ progress }}%</p>
+  </div>
+</div>
+
+
+
+
