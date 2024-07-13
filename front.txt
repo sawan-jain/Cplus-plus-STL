@@ -1,196 +1,72 @@
-// details.ts
-import { Component, OnInit } from '@angular/core';
+// src/app/data.service.ts
+
+import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-@Component({
-  selector: 'app-details',
-  templateUrl: './details.component.html',
-  styleUrls: ['./details.component.css']
-})
-export class DetailsComponent implements OnInit {
+export interface TableEntry {
+  id: number;
+  name: string;
+  value: string;
+}
 
-  entries$: Observable<any[]>; // Observable for entries
+@Injectable({
+  providedIn: 'root'
+})
+export class DataService {
+
+  private apiUrl = 'http://localhost:8080/api/table-entries'; // Replace with your Spring backend endpoint
 
   constructor(private http: HttpClient) { }
 
+  getTableEntries(): Observable<TableEntry[]> {
+    return this.http.get<TableEntry[]>(this.apiUrl);
+  }
+}
+
+
+// src/app/table/table.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { DataService, TableEntry } from '../data.service';
+
+@Component({
+  selector: 'app-table',
+  templateUrl: './table.component.html',
+  styleUrls: ['./table.component.css']
+})
+export class TableComponent implements OnInit {
+  
+  tableEntries: TableEntry[] = [];
+
+  constructor(private dataService: DataService) { }
+
   ngOnInit(): void {
-    this.entries$ = this.fetchEntries();
-  }
-
-  fetchEntries(): Observable<any[]> {
-    const apiUrl = 'http://localhost:8080/api/entries'; // Replace with your API endpoint
-    return this.http.get<any[]>(apiUrl);
+    this.dataService.getTableEntries().subscribe(entries => {
+      this.tableEntries = entries;
+    });
   }
 }
 
 
 
-import org.springframework.stereotype.Service;
-import java.util.concurrent.atomic.AtomicInteger;
+<!-- src/app/table/table.component.html -->
 
-@Service
-public class JobStatusService {
-
-    private AtomicInteger progress = new AtomicInteger(0);
-
-    public void startJob() {
-        // Reset progress
-        progress.set(0);
-
-        // Simulate a long-running job
-        new Thread(() -> {
-            for (int i = 0; i <= 100; i++) {
-                try {
-                    Thread.sleep(100); // Simulate job progress
-                    progress.set(i);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-
-    public int getJobStatus() {
-        return progress.get();
-    }
-}
-
-// details.html
-<!-- details.component.html -->
-
-<div *ngIf="entries$ | async as entries">
-  <h2>Details</h2>
-  <table class="table">
+<div class="table-container">
+  <table>
     <thead>
       <tr>
         <th>ID</th>
-        <th>Status</th>
-        <!-- Add other table headers as needed -->
+        <th>Name</th>
+        <th>Value</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let entry of entries">
+      <tr *ngFor="let entry of tableEntries">
         <td>{{ entry.id }}</td>
-        <td>{{ entry.status }}</td>
-        <!-- Add other table cells as needed -->
+        <td>{{ entry.name }}</td>
+        <td>{{ entry.value }}</td>
       </tr>
     </tbody>
   </table>
 </div>
-
-<div *ngIf="!(entries$ | async)">
-  <p>Loading entries...</p>
-</div>
-
-
-
-// run-batch.component.ts
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule, HttpParams } from '@angular/common/http';
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatInputModule } from '@angular/material/input';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { CommonModule } from '@angular/common';
-import { interval, Subscription } from 'rxjs';
-
-@Component({
-  selector: 'app-run-batch',
-  templateUrl: './run-batch.component.html',
-  styleUrls: ['./run-batch.component.css'],
-  standalone: true,
-  imports: [
-    ReactiveFormsModule,
-    HttpClientModule,
-    MatDatepickerModule,
-    MatInputModule,
-    MatNativeDateModule,
-    MatButtonModule,
-    MatProgressBarModule,
-    CommonModule
-  ]
-})
-export class RunBatchComponent {
-  dateForm: FormGroup;
-  progress = 0;
-  isJobRunning = false;
-  private jobStatusSubscription: Subscription;
-
-  constructor(private fb: FormBuilder, private http: HttpClient) {
-    this.dateForm = this.fb.group({
-      date: ['']
-    });
-  }
-
-  onSubmit() {
-    const selectedDate = this.dateForm.value.date;
-    this.sendDateToBackend(selectedDate);
-  }
-
-  sendDateToBackend(date: string) {
-    const apiUrl = 'http://localhost:8080/your-endpoint'; // Replace with your local API endpoint
-    let params = new HttpParams().set('dateToRun', date);
-
-    this.isJobRunning = true;
-    this.progress = 0;
-
-    this.http.get(apiUrl, { params }).subscribe({
-      next: (response) => this.startJobStatusPolling(),
-      error: (error) => {
-        console.error('Error sending date', error);
-        this.isJobRunning = false;
-      }
-    });
-  }
-
-  startJobStatusPolling() {
-    const statusUrl = 'http://localhost:8080/job-status';
-    this.jobStatusSubscription = interval(1000).subscribe(() => {
-      this.http.get<number>(statusUrl).subscribe({
-        next: (status) => {
-          this.progress = status;
-          if (status >= 100) {
-            this.isJobRunning = false;
-            this.jobStatusSubscription.unsubscribe();
-          }
-        },
-        error: (error) => {
-          console.error('Error fetching job status', error);
-          this.isJobRunning = false;
-          this.jobStatusSubscription.unsubscribe();
-        }
-      });
-    });
-  }
-}
-
-
-
-// run-batch.component.html
-
-<div>
-  <!-- Other elements of your component -->
-  <h1>Run Batch Component</h1>
-  
-  <form [formGroup]="dateForm" (ngSubmit)="onSubmit()">
-    <mat-form-field appearance="fill">
-      <mat-label>Choose a date</mat-label>
-      <input matInput [matDatepicker]="picker" formControlName="date">
-      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-      <mat-datepicker #picker></mat-datepicker>
-    </mat-form-field>
-    <button mat-raised-button type="submit" [disabled]="isJobRunning">Submit</button>
-  </form>
-
-  <div *ngIf="isJobRunning">
-    <mat-progress-bar mode="determinate" [value]="progress"></mat-progress-bar>
-    <p>Job Progress: {{ progress }}%</p>
-  </div>
-</div>
-
-
-
-
