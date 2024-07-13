@@ -7,6 +7,77 @@
 using namespace std;
 const int mod = 1e9 + 7;
 
+class SegmentTree {
+private:
+    vector<int> tree;
+    int n;
+
+    void build(const vector<int>& arr, int node, int start, int end) {
+        if (start == end) {
+            tree[node] = arr[start];
+        } else {
+            int mid = (start + end) / 2;
+            build(arr, 2 * node + 1, start, mid);
+            build(arr, 2 * node + 2, mid + 1, end);
+            tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
+        }
+    }
+
+    void update(int node, int start, int end, int idx, int value) {
+        if (start == end) {
+            tree[node] = value;
+        } else {
+            int mid = (start + end) / 2;
+            if (start <= idx && idx <= mid) {
+                update(2 * node + 1, start, mid, idx, value);
+            } else {
+                update(2 * node + 2, mid + 1, end, idx, value);
+            }
+            tree[node] = tree[2 * node + 1] + tree[2 * node + 2];
+        }
+    }
+
+    int query(int node, int start, int end, int l, int r) {
+        if (r < start || end < l) {
+            return 0;
+        }
+        if (l <= start && end <= r) {
+            return tree[node];
+        }
+        int mid = (start + end) / 2;
+        int leftSum = query(2 * node + 1, start, mid, l, r);
+        int rightSum = query(2 * node + 2, mid + 1, end, l, r);
+        return leftSum + rightSum;
+    }
+
+public:
+    SegmentTree(const vector<int>& arr) {
+        n = arr.size();
+        tree.resize(4 * n); // Resize to accommodate a sufficiently large segment tree
+        build(arr, 0, 0, n - 1);
+    }
+
+    void update(int idx, int value) {
+        update(0, 0, n - 1, idx, value);
+    }
+
+    int query(int l, int r) {
+        return query(0, 0, n - 1, l, r);
+    }
+};
+
+int main() {
+    vector<int> arr = {1, 3, 5, 7, 9, 11};
+    SegmentTree segTree(arr);
+
+    cout << "Sum of values in range [1, 3]: " << segTree.query(1, 3) << endl; // Output: 15
+    segTree.update(1, 10); // Update value at index 1 to 10
+    cout << "Updated sum of values in range [1, 3]: " << segTree.query(1, 3) << endl; // Output: 22
+
+    return 0;
+}
+
+
 // AN ARRAY WITH N VALUES CAN HAVE ATMOST 4N NODES IN ITS SEGMENT TREE 
 vector<ll> v(100000);
 vector<ll> segment(4*(100000));
