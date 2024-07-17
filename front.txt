@@ -1,3 +1,63 @@
+// src/app/spinner.service.ts
+
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class SpinnerService {
+  private loading = new BehaviorSubject<boolean>(false);
+  loadingStatus = this.loading.asObservable();
+
+  show(): void {
+    this.loading.next(true);
+  }
+
+  hide(): void {
+    this.loading.next(false);
+  }
+}
+
+
+// src/app/your-component/your-component.component.ts
+
+import { Component } from '@angular/core';
+import { DataService } from '../data.service';
+import { SpinnerService } from '../spinner.service';
+
+@Component({
+  selector: 'app-your-component',
+  templateUrl: './your-component.component.html',
+  styleUrls: ['./your-component.component.css']
+})
+export class YourComponent {
+  isLoading = false;
+
+  constructor(private dataService: DataService, private spinnerService: SpinnerService) {}
+
+  ngOnInit(): void {
+    this.spinnerService.loadingStatus.subscribe((status: boolean) => {
+      this.isLoading = status;
+    });
+  }
+
+  startBatchJob(): void {
+    this.spinnerService.show(); // Show the spinner
+    this.dataService.startBatchJob().subscribe(
+      () => {
+        this.spinnerService.hide(); // Hide the spinner on success
+      },
+      () => {
+        this.spinnerService.hide(); // Hide the spinner on error
+      }
+    );
+  }
+}
+<company-spinner *ngIf="isLoading"></company-spinner> <!-- Use your company-specific spinner -->
+
+
+
 
 /* src/app/table/table.component.css */
 
