@@ -1,30 +1,51 @@
-// src/app/spinner.service.ts
+<div class="container">
+  <form (ngSubmit)="onSubmit()">
+    <div>
+      <label for="inputData">Input Data:</label>
+      <input type="text" id="inputData" [(ngModel)]="inputData" name="inputData" required>
+    </div>
+    <button type="submit">Submit</button>
+  </form>
 
-import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+  <div class="response">
+    <div class="status-code">
+      <h3>Status Code: {{ statusCode }}</h3>
+    </div>
+    <div class="response-details">
+      <h3>Response Body:</h3>
+      <pre>{{ responseBody | json }}</pre>
+      <h3>Response Headers:</h3>
+      <pre>{{ responseHeaders | json }}</pre>
+    </div>
+  </div>
+</div>
 
-@Injectable({
-  providedIn: 'root'
-})
-export class SpinnerService {
-  private loading = new BehaviorSubject<boolean>(false);
-  loadingStatus = this.loading.asObservable();
-
-  show(): void {
-    this.loading.next(true);
-  }
-
-  hide(): void {
-    this.loading.next(false);
-  }
+.container {
+  display: flex;
+  justify-content: space-between;
 }
 
+form {
+  flex: 1;
+}
 
-// src/app/your-component/your-component.component.ts
+.response {
+  flex: 2;
+  display: flex;
+  justify-content: space-between;
+}
 
-import { Component } from '@angular/core';
-import { DataService } from '../data.service';
-import { SpinnerService } from '../spinner.service';
+.status-code {
+  flex: 1;
+}
+
+.response-details {
+  flex: 2;
+}
+\import { Component } from '@angular/core';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 @Component({
   selector: 'app-your-component',
@@ -32,29 +53,36 @@ import { SpinnerService } from '../spinner.service';
   styleUrls: ['./your-component.component.css']
 })
 export class YourComponent {
-  isLoading = false;
+  inputData: string = '';
+  statusCode: number | null = null;
+  responseBody: any = null;
+  responseHeaders: any = null;
 
-  constructor(private dataService: DataService, private spinnerService: SpinnerService) {}
+  constructor(private http: HttpClient) {}
 
-  ngOnInit(): void {
-    this.spinnerService.loadingStatus.subscribe((status: boolean) => {
-      this.isLoading = status;
-    });
+  onSubmit() {
+    const url = 'http://your-backend-url/api/your-endpoint';
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+
+    this.http.post(url, { data: this.inputData }, { headers, observe: 'response' })
+      .pipe(
+        catchError(this.handleError)
+      )
+      .subscribe(response => {
+        this.statusCode = response.status;
+        this.responseBody = response.body;
+        this.responseHeaders = response.headers;
+      });
   }
 
-  startBatchJob(): void {
-    this.spinnerService.show(); // Show the spinner
-    this.dataService.startBatchJob().subscribe(
-      () => {
-        this.spinnerService.hide(); // Hide the spinner on success
-      },
-      () => {
-        this.spinnerService.hide(); // Hide the spinner on error
-      }
-    );
+  private handleError(error: HttpErrorResponse) {
+    this.statusCode = error.status;
+    this.responseBody = error.error;
+    this.responseHeaders = error.headers;
+    return throwError(() => new Error('Something went wrong!'));
   }
 }
-<company-spinner *ngIf="isLoading"></company-spinner> <!-- Use your company-specific spinner -->
+
 
 
 
