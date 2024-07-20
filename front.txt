@@ -15,7 +15,7 @@
       <h3>Response Body:</h3>
       <pre>{{ responseBody | json }}</pre>
       <h3>Response Headers:</h3>
-      <pre>{{ responseHeaders | json }}</pre>
+      <pre *ngFor="let header of responseHeadersArray">{{ header.key }}: {{ header.value }}</pre>
     </div>
   </div>
 </div>
@@ -42,8 +42,9 @@ form {
 .response-details {
   flex: 2;
 }
-\import { Component } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+
+import { Component } from '@angular/core';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
@@ -57,6 +58,7 @@ export class YourComponent {
   statusCode: number | null = null;
   responseBody: any = null;
   responseHeaders: any = null;
+  responseHeadersArray: Array<{ key: string, value: string }> = [];
 
   constructor(private http: HttpClient) {}
 
@@ -66,12 +68,16 @@ export class YourComponent {
 
     this.http.post(url, { data: this.inputData }, { headers, observe: 'response' })
       .pipe(
-        catchError(this.handleError)
+        catchError(this.handleError.bind(this))
       )
       .subscribe(response => {
         this.statusCode = response.status;
         this.responseBody = response.body;
         this.responseHeaders = response.headers;
+        this.responseHeadersArray = [];
+        response.headers.keys().forEach(key => {
+          this.responseHeadersArray.push({ key: key, value: response.headers.get(key) });
+        });
       });
   }
 
@@ -79,9 +85,14 @@ export class YourComponent {
     this.statusCode = error.status;
     this.responseBody = error.error;
     this.responseHeaders = error.headers;
+    this.responseHeadersArray = [];
+    error.headers.keys().forEach(key => {
+      this.responseHeadersArray.push({ key: key, value: error.headers.get(key) });
+    });
     return throwError(() => new Error('Something went wrong!'));
   }
 }
+
 
 
 
