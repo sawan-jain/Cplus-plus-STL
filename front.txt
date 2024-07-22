@@ -1,3 +1,5 @@
+The process of dispatching reminders and alerts to Financial Advisors (FAs) and clients is orchestrated through a sophisticated batch job that executes daily. This intricate procedure meticulously examines account types to ascertain their eligibility for alerts on a given day, subsequently grouping and dispatching reminders accordingly. However, a significant gap exists in monitoring the success or failure of these job runs. In the event of a failure, a reconciliation process must be initiated to rerun the job. Furthermore, there was an absence of database connectivity to record job status details. Compounding these challenges was the lack of a user interface (UI) to effortlessly monitor job status and execute the job on an ad-hoc basis. The newly developed UI not only facilitates real-time job status tracking but also empowers users to initiate specific sub-tasks such as sending FA alerts, dispatching client letters, and applying red flags.
+
 .spinner-overlay {
   position: fixed;
   top: 0;
