@@ -1,3 +1,48 @@
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+public class TimestampUtils {
+
+    public static Timestamp getTimestampForDateWithCurrentTime(String dateString) throws ParseException {
+        // Define the date format
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+        // Parse the date string to a Date object
+        Date date = dateFormat.parse(dateString);
+
+        // Get the current time
+        Calendar currentCalendar = Calendar.getInstance();
+
+        // Create a new Calendar instance for the specific date
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+
+        // Set the current system time to the specific date
+        calendar.set(Calendar.HOUR_OF_DAY, currentCalendar.get(Calendar.HOUR_OF_DAY));
+        calendar.set(Calendar.MINUTE, currentCalendar.get(Calendar.MINUTE));
+        calendar.set(Calendar.SECOND, currentCalendar.get(Calendar.SECOND));
+        calendar.set(Calendar.MILLISECOND, currentCalendar.get(Calendar.MILLISECOND));
+
+        // Convert the Calendar to Timestamp
+        return new Timestamp(calendar.getTimeInMillis());
+    }
+
+    public static void main(String[] args) {
+        try {
+            String dateString = "2024-07-21"; // Replace with your desired date
+            Timestamp timestamp = getTimestampForDateWithCurrentTime(dateString);
+            System.out.println("Timestamp: " + timestamp);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+
 The process of dispatching reminders and alerts to Financial Advisors (FAs) and clients is orchestrated through a sophisticated batch job that executes daily. This intricate procedure meticulously examines account types to ascertain their eligibility for alerts on a given day, subsequently grouping and dispatching reminders accordingly. However, a significant gap exists in monitoring the success or failure of these job runs. In the event of a failure, a reconciliation process must be initiated to rerun the job. Furthermore, there was an absence of database connectivity to record job status details. Compounding these challenges was the lack of a user interface (UI) to effortlessly monitor job status and execute the job on an ad-hoc basis. The newly developed UI not only facilitates real-time job status tracking but also empowers users to initiate specific sub-tasks such as sending FA alerts, dispatching client letters, and applying red flags.
 
 .spinner-overlay {
